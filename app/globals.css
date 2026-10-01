@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/*
+ * SlidesForge AI design system.
+ *
+ * A premium creative-tool language: a deep charcoal workspace, hairline
+ * borders, restrained blue/violet accents and professional typography. Tokens
+ * are exposed as CSS variables so custom CSS and Tailwind utilities share one
+ * source of truth.
+ */
+
+:root {
+  --sf-bg: #0b0d12;
+  --sf-bg-elevated: #10131a;
+  --sf-surface: #14171f;
+  --sf-surface-hover: #191d27;
+  --sf-border: #232838;
+  --sf-border-strong: #2e3448;
+  --sf-text: #f4f6fb;
+  --sf-text-muted: #9aa3b2;
+  --sf-text-subtle: #6b7383;
+  --sf-accent: #6d8bff;
+  --sf-accent-soft: rgba(109, 139, 255, 0.14);
+  --sf-accent-violet: #a78bfa;
+  --sf-success: #4ade80;
+  --sf-warning: #fbbf24;
+  --sf-danger: #f87171;
+
+  --sf-radius-sm: 6px;
+  --sf-radius: 10px;
+  --sf-radius-lg: 14px;
+
+  --sf-sidebar-width: 244px;
+  --sf-topbar-height: 56px;
+}
+
+@theme inline {
+  --color-background: var(--sf-bg);
+  --color-foreground: var(--sf-text);
+  --color-surface: var(--sf-surface);
+  --color-surface-hover: var(--sf-surface-hover);
+  --color-border-subtle: var(--sf-border);
+  --color-border-strong: var(--sf-border-strong);
+  --color-muted: var(--sf-text-muted);
+  --color-subtle: var(--sf-text-subtle);
+  --color-accent: var(--sf-accent);
+  --color-accent-violet: var(--sf-accent-violet);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--sf-border);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--sf-bg);
+  color: var(--sf-text);
+  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--sf-accent-soft);
+  color: var(--sf-text);
+}
+
+/* Focus ring: visible but restrained. */
+:focus-visible {
+  outline: 2px solid var(--sf-accent);
+  outline-offset: 2px;
+  border-radius: var(--sf-radius-sm);
+}
+
+/* Scrollbars tuned to the workspace surface. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sf-border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--sf-border-strong);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Component primitives                                               */
+/* ------------------------------------------------------------------ */
+
+.sf-panel {
+  background: var(--sf-surface);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius);
+}
+
+.sf-panel-elevated {
+  background: var(--sf-bg-elevated);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-lg);
+}
+
+.sf-hairline {
+  border-color: var(--sf-border);
+}
+
+.sf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--sf-border-strong);
+  color: var(--sf-text-muted);
+  background: rgba(255, 255, 255, 0.02);
+  white-space: nowrap;
+}
+
+.sf-chip-accent {
+  border-color: rgba(109, 139, 255, 0.4);
+  color: #b9c6ff;
+  background: var(--sf-accent-soft);
+}
+
+.sf-chip-planned {
+  border-color: rgba(251, 191, 36, 0.32);
+  color: #f6d38a;
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.sf-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 5px;
+  border: 1px solid var(--sf-border-strong);
+  background: var(--sf-bg-elevated);
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  color: var(--sf-text-subtle);
+}
+
+/* Subtle grid used behind empty states and hero panels. */
+.sf-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+}

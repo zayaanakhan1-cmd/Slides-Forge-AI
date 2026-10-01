@@ -1,0 +1,12 @@
+# SlidesForge AI Python service dependencies.
+#
+# The service is intentionally small in Phase 1: FastAPI plus the packages the
+# planned stages (document processing and PowerPoint rendering) will need.
+# Nothing here calls an external AI provider yet.
+
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.32,<0.33
+pydantic>=2.9,<3
+pydantic-settings>=2.6,<3
+python-multipart>=0.0.12
+python-pptx>=1.0.2

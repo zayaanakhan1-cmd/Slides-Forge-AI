@@ -1,0 +1,279 @@
+// SlidesForge AI database schema.
+//
+// Target: PostgreSQL. No database connection is required in Phase 1; the schema
+// is defined so the canonical presentation model has a persistence home and so
+// versioned presentations, assets, templates, generation jobs, exports and
+// integrations have a place to live from the start.
+//
+// Design notes:
+// - Presentation.slides is a JSONB snapshot of the canonical model. This keeps
+//   the model authoritative: the database stores what the model produces rather
+//   than a lossy relational projection of it.
+// - PresentationVersion keeps immutable snapshots so the editor can diff,
+//   restore and audit changes over time.
+// - Slide rows exist alongside the JSON snapshot so slides can be queried,
+//   reordered and linked to assets without parsing the whole model.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GenerationJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum ExportStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum ExportDestination {
+  WEB
+  POWERPOINT
+  GOOGLE_SLIDES
+  PDF
+}
+
+enum IntegrationProvider {
+  GOOGLE
+  MICROSOFT
+  OPENAI
+  GEMINI
+  GROQ
+  CUSTOM
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  presentations Presentation[]
+  assets        Asset[]
+  templates     Template[]
+  generationJobs GenerationJob[]
+  exports       Export[]
+  integrations  Integration[]
+
+  @@map("users")
+}
+
+model Presentation {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+
+  // Canonical model metadata.
+  audience   Json     @default("{}")
+  purpose    Json     @default("{}")
+  subject    Json     @default("{}")
+  gradeLevel String   @default("")
+  language   String   @default("en-US")
+  theme      Json     @default("{}")
+
+  // Full snapshot of the canonical presentation model, including slides.
+  slides Json @default("[]")
+
+  // Monotonic version number mirrored from the model.
+  version Int @default(0)
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions PresentationVersion[]
+  slideRows Slide[]
+  generationJobs GenerationJob[]
+  exports Export[]
+
+  @@index([ownerId])
+  @@index([updatedAt])
+  @@map("presentations")
+}
+
+// Immutable snapshot of a presentation at a point in time. Used for history,
+// diffing and restore.
+model PresentationVersion {
+  id             String   @id @default(cuid())
+  presentationId String
+  presentation   Presentation @relation(fields: [presentationId], references: [id], onDelete: Cascade)
+
+  version   Int
+  snapshot  Json
+  label     String?
+  createdById String?
+  createdAt DateTime @default(now())
+
+  @@unique([presentationId, version])
+  @@index([presentationId])
+  @@map("presentation_versions")
+}
+
+// A queryable projection of a single slide. The authoritative content lives in
+// Presentation.slides; this table exists for ordering, search and relations.
+model Slide {
+  id             String   @id @default(cuid())
+  presentationId String
+  presentation   Presentation @relation(fields: [presentationId], references: [id], onDelete: Cascade)
+
+  // Mirrors Slide.id inside the canonical model.
+  slideKey     String
+  order        Int
+  title        String @default("")
+  narrativeRole String @default("custom")
+  layout       String @default("blank")
+  content      Json   @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([presentationId, slideKey])
+  @@index([presentationId, order])
+  @@map("slides")
+}
+
+model Asset {
+  id       String  @id @default(cuid())
+  kind     String  @default("image") // image | video | diagram | document
+  fileName String
+  mimeType String
+  byteSize Int?
+  url      String?
+  width    Int?
+  height   Int?
+  metadata Json    @default("{}")
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([kind])
+  @@map("assets")
+}
+
+model Template {
+  id          String  @id @default(cuid())
+  name        String
+  description String  @default("")
+  category    String?
+  subject     String?
+  gradeLevel  String?
+
+  // Default narrative outline for the template.
+  outline Json @default("[]")
+  // Default theme for the template.
+  theme   Json @default("{}")
+
+  isPublished Boolean @default(false)
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([category])
+  @@map("templates")
+}
+
+// A unit of AI or rendering work. Phase 1 defines the shape; no jobs are queued
+// until generation is implemented.
+model GenerationJob {
+  id             String @id @default(cuid())
+  presentationId String?
+  presentation   Presentation? @relation(fields: [presentationId], references: [id], onDelete: SetNull)
+
+  kind     String             @default("generate-presentation")
+  status   GenerationJobStatus @default(QUEUED)
+  provider String?
+  model    String?
+
+  // The structured request that produced this job.
+  request  Json @default("{}")
+  // The structured result, when the job succeeded.
+  result   Json?
+  error    String?
+
+  startedAt   DateTime?
+  finishedAt  DateTime?
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([presentationId])
+  @@index([status])
+  @@map("generation_jobs")
+}
+
+// A request to deliver a presentation to a destination.
+model Export {
+  id             String @id @default(cuid())
+  presentationId String
+  presentation   Presentation @relation(fields: [presentationId], references: [id], onDelete: Cascade)
+
+  destination ExportDestination
+  status      ExportStatus      @default(QUEUED)
+
+  fileName String?
+  mimeType String?
+  url      String?
+  byteSize Int?
+  error    String?
+  options  Json @default("{}")
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([presentationId])
+  @@index([status])
+  @@map("exports")
+}
+
+// An external account the workspace can use, e.g. Google for Slides export.
+model Integration {
+  id       String              @id @default(cuid())
+  provider IntegrationProvider
+  status   String              @default("disconnected")
+  // Encrypted credential payload or OAuth token reference.
+  credentials Json             @default("{}")
+  metadata    Json             @default("{}")
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, provider])
+  @@index([provider])
+  @@map("integrations")
+}
