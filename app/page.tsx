@@ -32,7 +32,7 @@ export default function LandingPage() {
       <section className="flex flex-col gap-6">
         <Logo />
         <div className="flex flex-col gap-4">
-          <Chip tone="accent">Phase 1 · engineering foundation</Chip>
+          <Chip tone="accent">Phase 2 · AI generation pipeline</Chip>
           <h1 className="max-w-3xl text-4xl font-semibold leading-[1.1] tracking-tight md:text-5xl">
             AI presentation intelligence for education.
           </h1>

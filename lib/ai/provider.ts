@@ -12,10 +12,14 @@
 
 import type {
   AIProviderId,
+  NarrativePlan,
   OutlineGenerationRequest,
   PresentationGenerationResult,
   PresentationOutline,
+  ResearchBrief,
+  SlideDraft,
   SlideGenerationRequest,
+  UnderstandingBrief,
 } from "@/types/ai";
 import type { Slide } from "@/types/slide";
 import type { ProviderCallOptions, ProviderConfig } from "./types";
@@ -47,11 +51,52 @@ export interface ProviderDescriptor {
  * Implementations are responsible for translating between the provider-agnostic
  * request/response types and their own SDK. They must return structured
  * presentation data, never UI instructions.
+ *
+ * The five stage methods mirror the product pipeline (understand, research,
+ * narrative, slide plan, generate). Each stage takes the previous stage's
+ * validated output, so a provider cannot skip ahead or invent its own context.
+ * The aggregate methods remain for callers that want a single call.
  */
 export interface AIProvider {
   readonly descriptor: ProviderDescriptor;
   /** Whether the provider has the credentials it needs to run. */
   isConfigured(): boolean;
+
+  /** Stage 1 — interpret the request into an explicit brief. */
+  understand(
+    request: OutlineGenerationRequest,
+    options?: ProviderCallOptions,
+  ): Promise<UnderstandingBrief>;
+
+  /** Stage 2 — gather well-established background for the brief. */
+  research(
+    request: OutlineGenerationRequest,
+    understanding: UnderstandingBrief,
+    options?: ProviderCallOptions,
+  ): Promise<ResearchBrief>;
+
+  /** Stage 3 — decide the story the deck will tell. */
+  buildNarrative(
+    request: OutlineGenerationRequest,
+    understanding: UnderstandingBrief,
+    research: ResearchBrief,
+    options?: ProviderCallOptions,
+  ): Promise<NarrativePlan>;
+
+  /** Stage 4 — turn the narrative into a slide-by-slide plan. */
+  planSlides(
+    request: OutlineGenerationRequest,
+    narrative: NarrativePlan,
+    options?: ProviderCallOptions,
+  ): Promise<PresentationOutline>;
+
+  /** Stage 5 — write the content for every planned slide. */
+  generateSlideDrafts(
+    request: OutlineGenerationRequest,
+    outline: PresentationOutline,
+    options?: ProviderCallOptions,
+  ): Promise<SlideDraft[]>;
+
   /** Plan a presentation outline. */
   generateOutline(
     request: OutlineGenerationRequest,

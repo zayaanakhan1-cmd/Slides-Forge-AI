@@ -62,7 +62,14 @@ export function getProvider(id: AIProviderId): AIProvider {
     throw new AIProviderNotFoundError(id);
   }
   if (!entry.instance) {
-    entry.instance = entry.factory(entry.config);
+    const instance = entry.factory(entry.config);
+    if (instance.descriptor.id !== id) {
+      throw new Error(
+        `AI provider registered as "${id}" reports descriptor id ` +
+          `"${instance.descriptor.id}". The descriptor id must match the registration key.`,
+      );
+    }
+    entry.instance = instance;
   }
   return entry.instance;
 }

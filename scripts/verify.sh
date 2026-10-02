@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Verify the Phase 1 foundation end to end.
+# Verify the SlidesForge AI repository end to end.
 #
-# Runs the frontend lint, type check and production build, then the Python
-# service tests. Fails fast on the first error so problems are not hidden.
+# Runs the frontend lint, type check, Vitest suite and production build, then the
+# Python service tests. Fails fast on the first error so problems are not hidden.
 
 set -euo pipefail
 
@@ -15,6 +15,9 @@ npm run lint
 
 echo "==> Frontend: type check"
 npm run typecheck
+
+echo "==> Frontend: tests"
+npm test
 
 echo "==> Frontend: production build"
 npm run build

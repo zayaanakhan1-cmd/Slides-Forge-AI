@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 
 import { PageHeader, Panel, PanelHeader, StatusRow } from "@/components/ui/primitives";
 import { listDestinationDescriptors } from "@/lib/destinations";
-import { listProviders } from "@/lib/ai";
+import { ensureProvidersRegistered } from "@/lib/ai/providers/bootstrap";
+import { listProviders } from "@/lib/ai/providers/registry";
 import { FOUNDATION_CAPABILITIES } from "@/lib/status/implementation";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default function SettingsPage() {
+  ensureProvidersRegistered();
   const providers = listProviders();
   const destinations = listDestinationDescriptors();
 
@@ -22,7 +24,7 @@ export default function SettingsPage() {
       <Panel>
         <PanelHeader
           title="AI providers"
-          description="Providers are resolved through the AI registry. None are registered in Phase 1."
+          description="Providers are resolved through the AI registry and configured from the environment."
         />
         {providers.length === 0 ? (
           <div className="px-5 py-5">
@@ -39,14 +41,33 @@ export default function SettingsPage() {
           <ul>
             {providers.map((provider) => (
               <li key={provider.id} className="border-b px-5 py-3.5 last:border-b-0" style={{ borderColor: "var(--sf-border)" }}>
-                <p className="text-[12.5px] font-medium">{provider.label}</p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[12.5px] font-medium">{provider.label}</p>
+                  <span className="sf-chip">{provider.id}</span>
+                </div>
                 <p className="mt-1 text-[11.5px] text-[var(--sf-text-muted)]">
                   {provider.description}
                 </p>
+                <ul className="mt-2 flex flex-wrap gap-1.5">
+                  {provider.capabilities.map((capability) => (
+                    <li key={capability} className="sf-chip">
+                      {capability}
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
         )}
+        <div className="border-t px-5 py-4" style={{ borderColor: "var(--sf-border)" }}>
+          <p className="text-[11.5px] leading-relaxed text-[var(--sf-text-muted)]">
+            Configure with <code className="font-mono">SLIDESFORGE_AI_API_KEY</code>,{" "}
+            <code className="font-mono">SLIDESFORGE_AI_BASE_URL</code>,{" "}
+            <code className="font-mono">SLIDESFORGE_AI_MODEL</code> and{" "}
+            <code className="font-mono">SLIDESFORGE_AI_TIMEOUT_MS</code>. Whether a
+            provider is configured depends on the environment it is running in.
+          </p>
+        </div>
       </Panel>
 
       <Panel>

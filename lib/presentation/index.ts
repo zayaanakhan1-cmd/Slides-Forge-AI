@@ -9,5 +9,6 @@ export * from "./schemas";
 export * from "./validation";
 export * from "./serialization";
 export * from "./factory";
+export * from "./builders";
 export * from "./model";
 export * from "./defaults";

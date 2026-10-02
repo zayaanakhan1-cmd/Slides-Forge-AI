@@ -11,7 +11,7 @@ export default function CreatePage() {
       <PageHeader
         eyebrow="New presentation"
         title="Create"
-        description="Describe what you need to teach. The form mirrors the structured request the AI orchestrator will accept once a provider is implemented."
+        description="Describe what you need. SlidesForge AI understands the request, gathers background, builds a narrative, plans the slides and generates a structured presentation that conforms to the canonical model."
       />
       <CreateForm />
     </div>

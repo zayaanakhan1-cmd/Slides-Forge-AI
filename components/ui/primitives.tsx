@@ -139,6 +139,7 @@ export function Button({
   disabled,
   className,
   title,
+  onClick,
 }: {
   children: ReactNode;
   variant?: "primary" | "secondary" | "ghost";
@@ -146,6 +147,7 @@ export function Button({
   disabled?: boolean;
   className?: string;
   title?: string;
+  onClick?: () => void;
 }) {
   const base =
     "inline-flex items-center justify-center gap-2 rounded-[var(--sf-radius-sm)] px-3 py-1.5 text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
@@ -161,6 +163,7 @@ export function Button({
       type={type}
       disabled={disabled}
       title={title}
+      onClick={onClick}
       className={cn(base, variants[variant], className)}
     >
       {children}

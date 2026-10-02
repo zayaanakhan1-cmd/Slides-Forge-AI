@@ -66,8 +66,8 @@ export function Sidebar() {
         className="border-t px-4 py-3 text-[10.5px] leading-relaxed text-[var(--sf-text-subtle)]"
         style={{ borderColor: "var(--sf-border)" }}
       >
-        <p className="font-medium text-[var(--sf-text-muted)]">Phase 1 foundation</p>
-        <p className="mt-0.5">Model, shell and architecture. Generators are planned.</p>
+        <p className="font-medium text-[var(--sf-text-muted)]">Phase 2 · generation</p>
+        <p className="mt-0.5">Structured AI generation and viewing. Export is planned.</p>
       </div>
     </aside>
   );

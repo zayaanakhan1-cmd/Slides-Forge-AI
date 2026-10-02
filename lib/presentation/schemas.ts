@@ -23,9 +23,16 @@ import type {
   DestinationExportResult,
 } from "@/types/destination";
 import type {
+  NarrativeBeat,
+  NarrativePlan,
   PresentationGenerationRequest,
   PresentationGenerationResult,
   PresentationOutline,
+  PromptGenerationRequest,
+  ResearchBrief,
+  ResearchFinding,
+  SlideDraft,
+  UnderstandingBrief,
 } from "@/types/ai";
 
 /* -------------------------------------------------------------------------- */
@@ -426,35 +433,37 @@ export const presentationOutlineSchema: z.ZodType<PresentationOutline> = z.objec
   slides: z.array(slidePlanEntrySchema),
 });
 
-export const presentationGenerationRequestSchema: z.ZodType<PresentationGenerationRequest> =
-  z.object({
-    topic: z.string().min(1),
+export const presentationGenerationRequestObjectSchema = z.object({
+  topic: z.string().min(1),
+  description: z.string().optional(),
+  audience: z.object({
+    label: z.string().min(1),
     description: z.string().optional(),
-    audience: z.object({
-      label: z.string().min(1),
-      description: z.string().optional(),
-    }),
-    purpose: z.object({
-      label: z.string().min(1),
-      description: z.string().optional(),
-      durationMinutes: z.number().positive().optional(),
-    }),
-    subject: z.object({
-      name: z.string().min(1),
-      topic: z.string().optional(),
-      gradeLevel: z.string().optional(),
-      standards: z.array(z.string()).optional(),
-    }),
-    gradeLevel: z.string().min(1),
-    slideCount: z.number().int().positive().optional(),
-    aspectRatio: aspectRatioSchema.optional(),
-    language: z.string().optional(),
-    complexity: aiComplexitySchema.optional(),
-    themeId: z.string().optional(),
-    constraints: z.array(z.string()).optional(),
-    targetDestinations: z.array(z.enum(["web", "powerpoint", "google-slides", "pdf"])).optional(),
-    options: jsonObjectSchema.optional(),
-  });
+  }),
+  purpose: z.object({
+    label: z.string().min(1),
+    description: z.string().optional(),
+    durationMinutes: z.number().positive().optional(),
+  }),
+  subject: z.object({
+    name: z.string().min(1),
+    topic: z.string().optional(),
+    gradeLevel: z.string().optional(),
+    standards: z.array(z.string()).optional(),
+  }),
+  gradeLevel: z.string().min(1),
+  slideCount: z.number().int().positive().optional(),
+  aspectRatio: aspectRatioSchema.optional(),
+  language: z.string().optional(),
+  complexity: aiComplexitySchema.optional(),
+  themeId: z.string().optional(),
+  constraints: z.array(z.string()).optional(),
+  targetDestinations: z.array(z.enum(["web", "powerpoint", "google-slides", "pdf"])).optional(),
+  options: jsonObjectSchema.optional(),
+});
+
+export const presentationGenerationRequestSchema: z.ZodType<PresentationGenerationRequest> =
+  presentationGenerationRequestObjectSchema;
 
 export const aiUsageSchema = z.object({
   inputTokens: z.number().nonnegative().optional(),
@@ -478,6 +487,101 @@ export const presentationGenerationResultSchema: z.ZodType<PresentationGeneratio
     metadata: aiResponseMetadataSchema,
     warnings: z.array(z.string()).optional(),
   });
+
+/* -------------------------------------------------------------------------- */
+/* Generation pipeline                                                        */
+/* -------------------------------------------------------------------------- */
+
+export const generationStageSchema = z.enum([
+  "understand",
+  "research",
+  "narrative",
+  "slidePlan",
+  "generate",
+  "validate",
+]);
+
+export const generationStageStatusSchema = z.enum([
+  "pending",
+  "running",
+  "succeeded",
+  "failed",
+]);
+
+export const serializedAIErrorSchema = z.object({
+  code: z.string().min(1),
+  message: z.string().min(1),
+  retryable: z.boolean(),
+  providerId: z.string().optional(),
+  issues: z
+    .array(z.object({ path: z.string(), message: z.string(), code: z.string() }))
+    .optional(),
+});
+
+export const generationEventSchema = z.object({
+  stage: generationStageSchema,
+  status: generationStageStatusSchema,
+  at: z.string().min(1),
+  error: serializedAIErrorSchema.optional(),
+  detail: z.string().optional(),
+});
+
+export const understandingBriefSchema: z.ZodType<UnderstandingBrief> = z.object({
+  topic: z.string().min(1),
+  objective: z.string().min(1),
+  learningObjectives: z.array(z.string()),
+  priorKnowledge: z.array(z.string()),
+  assumptions: z.array(z.string()),
+  openQuestions: z.array(z.string()),
+});
+
+export const researchFindingSchema: z.ZodType<ResearchFinding> = z.object({
+  id: z.string().min(1),
+  topic: z.string().min(1),
+  summary: z.string().min(1),
+  confidence: z.enum(["established", "emerging", "uncertain"]),
+  source: z.string().min(1).optional(),
+});
+
+export const researchBriefSchema: z.ZodType<ResearchBrief> = z.object({
+  summary: z.string(),
+  findings: z.array(researchFindingSchema),
+  limitations: z.array(z.string()),
+});
+
+export const narrativeBeatSchema: z.ZodType<NarrativeBeat> = z.object({
+  id: z.string().min(1),
+  role: narrativeRoleSchema,
+  purpose: z.string().min(1),
+  keyMessage: z.string().min(1),
+});
+
+export const narrativePlanSchema: z.ZodType<NarrativePlan> = z.object({
+  title: z.string().min(1),
+  description: z.string(),
+  thesis: z.string(),
+  beats: z.array(narrativeBeatSchema),
+});
+
+export const slideDraftSchema: z.ZodType<SlideDraft> = z.object({
+  title: z.string().min(1),
+  narrativeRole: narrativeRoleSchema,
+  layout: slideLayoutSchema,
+  subtitle: z.string().optional(),
+  paragraphs: z.array(z.string()).optional(),
+  bullets: z.array(z.string()).optional(),
+  callout: z.string().optional(),
+  quote: z
+    .object({ text: z.string().min(1), attribution: z.string().optional() })
+    .optional(),
+  speakerNotes: z.string().optional(),
+  cues: z.array(z.string()).optional(),
+});
+
+export const promptGenerationRequestSchema: z.ZodType<PromptGenerationRequest> = z.object({
+  prompt: z.string().trim().min(3).max(2000),
+  overrides: presentationGenerationRequestObjectSchema.partial().optional(),
+});
 
 /* -------------------------------------------------------------------------- */
 /* Destinations                                                               */

@@ -6,7 +6,7 @@
  * configuration and structured error codes. No concrete vendor is referenced.
  */
 
-import type { AIProviderId, AIUsage } from "@/types/ai";
+import type { AIProviderId, AIUsage, SerializedAIError } from "@/types/ai";
 import type { JsonObject } from "@/types/json";
 
 /** Options passed to a single provider call. */
@@ -31,6 +31,8 @@ export interface ProviderConfig {
   defaultModel?: string;
   /** Whether the provider is enabled in this environment. */
   enabled?: boolean;
+  /** Default per-request timeout in milliseconds. */
+  timeoutMs?: number;
 }
 
 /** Stable error codes surfaced by the AI layer. */
@@ -98,5 +100,38 @@ export function mergeUsage(a: AIUsage | undefined, b: AIUsage | undefined): AIUs
     outputTokens: (a?.outputTokens ?? 0) + (b?.outputTokens ?? 0),
     totalTokens: (a?.totalTokens ?? 0) + (b?.totalTokens ?? 0),
     estimatedCostUsd: (a?.estimatedCostUsd ?? 0) + (b?.estimatedCostUsd ?? 0),
+  };
+}
+
+/**
+ * Serialize any thrown value into a stable, JSON-safe error payload.
+ *
+ * This is the single conversion used by the orchestrator and the API routes, so
+ * the same failure produces the same code and message wherever it is reported.
+ * A non-`AIError` is treated as an unknown failure rather than being reworded
+ * into something that sounds more reassuring than it is.
+ */
+export function toSerializedAIError(error: unknown, providerId?: AIProviderId): SerializedAIError {
+  if (error instanceof AIError) {
+    return {
+      code: error.code,
+      message: error.message,
+      retryable: error.retryable,
+      providerId: error.providerId ?? providerId,
+    };
+  }
+  if (error instanceof Error) {
+    return {
+      code: "unknown",
+      message: error.message,
+      retryable: false,
+      providerId,
+    };
+  }
+  return {
+    code: "unknown",
+    message: typeof error === "string" ? error : "An unknown error occurred.",
+    retryable: false,
+    providerId,
   };
 }

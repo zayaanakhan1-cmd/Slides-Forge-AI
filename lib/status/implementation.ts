@@ -31,7 +31,8 @@ export const FOUNDATION_CAPABILITIES: CapabilityStatus[] = [
     key: "ai-abstraction",
     label: "AI provider abstraction",
     status: "available",
-    detail: "Provider interface, registry and orchestrator. No provider is registered.",
+    detail:
+      "Provider interface, registry and a real OpenAI-compatible provider configured from the environment.",
   },
   {
     key: "destination-architecture",
@@ -46,16 +47,36 @@ export const FOUNDATION_CAPABILITIES: CapabilityStatus[] = [
     detail: "FastAPI application exposing GET /health, structured for future stages.",
   },
   {
+    key: "generation-pipeline",
+    label: "Generation pipeline",
+    status: "available",
+    detail:
+      "Understand, research, narrative, slide plan, generate and validate — each stage validated at runtime.",
+  },
+  {
+    key: "generation-api",
+    label: "Generation API",
+    status: "available",
+    detail:
+      "Streaming and JSON endpoints with structured errors. Requires a configured provider.",
+  },
+  {
+    key: "presentation-viewer",
+    label: "Presentation viewer",
+    status: "available",
+    detail: "Slide canvas, thumbnails, navigation and deck metadata on the canonical model.",
+  },
+  {
+    key: "slide-editing",
+    label: "Slide editing",
+    status: "available",
+    detail: "Slide selection, title, body text and speaker notes. Element manipulation is planned.",
+  },
+  {
     key: "database-schema",
     label: "Database schema",
     status: "planned",
     detail: "Prisma schema is defined for PostgreSQL; no database is connected yet.",
-  },
-  {
-    key: "ai-generation",
-    label: "AI generation",
-    status: "planned",
-    detail: "Requires a registered provider. No external AI API is called in this phase.",
   },
   {
     key: "powerpoint-export",
@@ -76,10 +97,16 @@ export const FOUNDATION_CAPABILITIES: CapabilityStatus[] = [
     detail: "Paginated PDF rendering of the canonical model.",
   },
   {
-    key: "editor",
-    label: "Presentation editor",
+    key: "persistence",
+    label: "Presentation persistence",
     status: "planned",
-    detail: "Slide editing surface built on the canonical model.",
+    detail: "Generated decks live in memory for the session; saving to PostgreSQL is planned.",
+  },
+  {
+    key: "full-editor",
+    label: "Full editor",
+    status: "planned",
+    detail: "Element manipulation, reordering and layout editing on the canonical model.",
   },
 ];
 
